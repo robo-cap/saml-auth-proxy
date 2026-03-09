@@ -33,9 +33,28 @@ func minOfInts(x, y int) int {
 // - Adds host in request URI
 // - Adds CookieDomain config in http.SetCookie
 // - Handles X-Forwarded headers
+// - Handles ForwardAuth case by using original host from custom header
 func (t CookieRequestTracker) TrackRequest(w http.ResponseWriter, r *http.Request, samlRequestID string) (string, error) {
 	var redirectURI *url.URL
-	if t.TrustForwardedHeaders && r.Header.Get(HeaderForwardedProto) != "" && r.Header.Get(HeaderForwardedHost) != "" && r.Header.Get(HeaderForwardedURI) != "" {
+
+	if t.TrustForwardedHeaders && r.URL.Path == "/_verify" {
+		// ForwardAuth case: check for custom header with original host
+		originalHost := r.Header.Get("X-Original-Host")
+		originalProto := r.Header.Get("X-Original-Proto")
+		// Use custom headers if available, otherwise fallback to X-Forwarded headers
+		if originalHost == "" {
+			originalHost = r.Header.Get("X-Forwarded-Host")
+			originalProto = r.Header.Get("X-Forwarded-Proto")
+		}
+		if originalHost != "" && originalProto != "" {
+			// Use the original host and proto, but use the root path since we don't have the original path
+			redirectURI, _ = url.Parse(fmt.Sprintf("%s://%s/", originalProto, originalHost))
+		} else {
+			// Fallback to request URL
+			redirectURI, _ = url.Parse(r.URL.String())
+			redirectURI.Host = r.Host
+		}
+	} else if t.TrustForwardedHeaders && r.Header.Get(HeaderForwardedProto) != "" && r.Header.Get(HeaderForwardedHost) != "" && r.Header.Get(HeaderForwardedURI) != "" {
 		// When X-Forwarded headers exist, use it
 		redirectURI, _ = url.Parse(fmt.Sprintf("%s://%s%s", r.Header.Get(HeaderForwardedProto), r.Header.Get(HeaderForwardedHost), r.Header.Get(HeaderForwardedURI)))
 	} else {
