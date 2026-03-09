@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -69,8 +70,18 @@ func main() {
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
+
+	// Create certificate reload channel
+	certReloadChan := make(chan tls.Certificate, 1)
+
+	// Start certificate reloader goroutine
 	g.Go(func() error {
-		return server.Start(ctx, listener, logger, &serverConfig)
+		return server.StartCertReloader(gCtx, logger, &serverConfig, certReloadChan)
+	})
+
+	// Start server goroutine with certificate reload support
+	g.Go(func() error {
+		return server.Start(ctx, listener, logger, &serverConfig, certReloadChan)
 	})
 
 	g.Go(func() error {

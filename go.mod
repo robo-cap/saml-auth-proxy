@@ -15,6 +15,7 @@ require (
 
 require (
 	github.com/beevik/etree v1.6.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
@@ -22,4 +23,5 @@ require (
 	github.com/russellhaering/goxmldsig v1.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 )
